@@ -45,6 +45,43 @@ def add_lesson_index_page(lesson_path):
     with open(Path(Path(lesson_path), Path("index.html")), "w+") as index_file:
         index_file.writelines(str(a))
 
+def activate(ods_dir):
+    activate_cran(ods_dir)
+
+def activate_cran(ods_dir):
+    minicran_path = os.path.join("file://", ods_dir.lstrip("/"), "miniCRAN") #lstrip needed because "If any component is an absolute path, all previous path components will be discarded"
+    rprofile_line = 'local({r <- getOption("repos"); r["CRAN"] <- "%s"; options(repos=r)}) #Added by offlinedatasci\n' % minicran_path
+    rprofile_path = os.path.join(os.path.expanduser("~"), ".Rprofile")
+    with open(rprofile_path) as input:
+        rprofile_list = list(input)
+    with open(rprofile_path, 'w') as output:
+        activated = False
+        for line in rprofile_list:
+            if line.strip() == rprofile_line.strip():
+                output.write(line)
+                activated = True
+            elif line.strip() == f"#{rprofile_line.strip()}":
+                output.write(rprofile_line)
+                activated = True
+            else:
+                output.write(line)
+        if not activated:
+            output.write(rprofile_line)
+
+def deactivate():
+    deactivate_cran()
+
+def deactivate_cran():
+    rprofile_path = os.path.join(os.path.expanduser("~"), ".Rprofile")
+    with open(rprofile_path) as input:
+        rprofile_list = list(input)
+    with open(rprofile_path, 'w') as output:
+        for line in rprofile_list:
+            if "#Added by offlinedatasci" in line.strip():
+                pass
+            else:
+                output.write(line)
+
 def download_and_save_installer(latest_version_url, destination_path):
     """Download and save installer in user given path.
 
