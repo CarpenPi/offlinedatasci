@@ -47,6 +47,7 @@ def add_lesson_index_page(lesson_path):
 
 def activate(ods_dir):
     activate_cran(ods_dir)
+    activate_pypi(ods_dir)
 
 def activate_cran(ods_dir):
     minicran_path = os.path.join("file://", ods_dir.lstrip("/"), "miniCRAN") #lstrip needed because "If any component is an absolute path, all previous path components will be discarded"
@@ -68,8 +69,39 @@ def activate_cran(ods_dir):
         if not activated:
             output.write(rprofile_line)
 
+def activate_pypi(ods_dir):
+    pypi_path = os.path.join("file:///", ods_dir.lstrip("/"), "pypi") #lstrip needed because "If any component is an absolute path, all previous path components will be discarded"
+    pip_config_line = f"#Added by offlinedatasci\n[global]\nindex-url = {pypi_path}\n"
+    pip_config_folder_path = Path(os.path.join(os.path.expanduser("~"), ".config", "pip"))
+    pip_config_path = Path(pip_config_folder_path, "pip.conf")
+    if not pip_config_folder_path.is_dir():
+        print("\nCreating .config/pip folder in home directory")
+        Path.mkdir(pip_config_folder_path, parents=True)
+    if pip_config_path.is_file():
+        with open(pip_config_path) as input:
+            pip_config_list = list(input)
+    else:
+        pip_config_list = []
+    with open(pip_config_path, 'w') as output:
+        if not pip_config_list:
+            output.write(pip_config_line)
+        else:
+            activated = False
+            for line in pip_config_list:
+                if line.strip() == pip_config_line.strip():
+                    output.write(line)
+                    activated = True
+                elif line.strip() == f"#{pip_config_line.strip()}":
+                    output.write(pip_config_line)
+                    activated = True
+                else:
+                    output.write(line)
+            if not activated:
+                output.write(pip_config_line)
+    
 def deactivate():
     deactivate_cran()
+    deactivate_pypi()
 
 def deactivate_cran():
     rprofile_path = os.path.join(os.path.expanduser("~"), ".Rprofile")
@@ -79,6 +111,25 @@ def deactivate_cran():
         for line in rprofile_list:
             if "#Added by offlinedatasci" in line.strip():
                 pass
+            else:
+                output.write(line)
+
+def deactivate_pypi():
+    pip_config_folder_path = Path(os.path.join(os.path.expanduser("~"), ".config", "pip"))
+    pip_config_path = Path(pip_config_folder_path, "pip.conf")
+    with open(pip_config_path) as input:
+        pip_config_list = list(input)
+    last_line_ods_comment = False
+    next_last_line_ods_comment = False
+    with open(pip_config_path, 'w') as output:
+        for line in pip_config_list:
+            if "#Added by offlinedatasci" in line.strip():
+                last_line_ods_comment = True
+            elif last_line_ods_comment:
+                next_last_line_ods_comment = True
+                last_line_ods_comment = False
+            elif next_last_line_ods_comment:
+                next_last_line_ods_comment = False
             else:
                 output.write(line)
 
@@ -351,7 +402,8 @@ def get_default_packages(language):
     packages = { 
         "r": {
             "data-carpentry": ["tidyverse", "RSQLite"],
-            "data-science": ["dplyr", "ggplot2", "shiny", "lubridate", "knitr", "esquisse", "mlr3", "knitr", "DT"]
+            "data-science": ["dplyr", "ggplot2", "shiny", "lubridate", "knitr",
+                             "esquisse", "mlr3", "knitr", "DT", "ratdat"]
         },
         "python": {
             "data-carpentry": ["pandas", "notebook", "numpy", "matplotlib", "plotnine"], 
