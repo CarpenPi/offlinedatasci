@@ -52,9 +52,12 @@ def activate(ods_dir):
 def activate_cran(ods_dir):
     minicran_path = os.path.join("file://", ods_dir.lstrip("/"), "miniCRAN") #lstrip needed because "If any component is an absolute path, all previous path components will be discarded"
     rprofile_line = 'local({r <- getOption("repos"); r["CRAN"] <- "%s"; options(repos=r)}) #Added by offlinedatasci\n' % minicran_path
-    rprofile_path = os.path.join(os.path.expanduser("~"), ".Rprofile")
-    with open(rprofile_path) as input:
-        rprofile_list = list(input)
+    rprofile_path = Path(os.path.join(os.path.expanduser("~"), ".Rprofile"))
+    if rprofile_path.is_file():
+        with open(rprofile_path) as input:
+            rprofile_list = list(input)
+    else:
+        rprofile_list = []
     with open(rprofile_path, 'w') as output:
         activated = False
         for line in rprofile_list:
