@@ -46,10 +46,35 @@ def add_lesson_index_page(lesson_path):
         index_file.writelines(str(a))
 
 def activate(ods_dir):
+    """Use local mirrors for CRAN and PyPI repositories
+
+    Parameters:
+    ods_dir (str): The directory where the offline data science (ods) environment is located. 
+                   This directory should contain the miniCRAN and PyPI repositories.
+
+    Modifies the .Rprofile and pip.conf files in the user's home directory to set the CRAN and PyPI 
+    repositories to the local mirrors located in the ods_dir.
+
+    The function does not return any value. It modifies the .Rprofile and pip.conf files in place.
+    """
+        
     activate_cran(ods_dir)
     activate_pypi(ods_dir)
 
 def activate_cran(ods_dir):
+    """Use local mirror of CRAN
+
+    Parameters:
+    ods_dir (str): The directory where the offline data science (ods) environment is located. 
+                   This directory should contain the miniCRAN repository.
+
+    The function works by adding a line to the .Rprofile file that sets the CRAN repository to the miniCRAN repository 
+    located in the ods_dir. If this line already exists in the .Rprofile file, it is not added again. If the line exists 
+    but is commented out, it is uncommented.
+
+    The function does not return any value. It modifies the .Rprofile file in place.
+    """
+
     minicran_path = os.path.join("file://", ods_dir.lstrip("/"), "miniCRAN") #lstrip needed because "If any component is an absolute path, all previous path components will be discarded"
     rprofile_line = 'local({r <- getOption("repos"); r["CRAN"] <- "%s"; options(repos=r)}) #Added by offlinedatasci\n' % minicran_path
     rprofile_path = Path(os.path.join(os.path.expanduser("~"), ".Rprofile"))
@@ -73,6 +98,19 @@ def activate_cran(ods_dir):
             output.write(rprofile_line)
 
 def activate_pypi(ods_dir):
+    """Use local mirror of PyPI
+
+    Parameters:
+    ods_dir (str): The directory where the offline data science (ods) environment is located. 
+                   This directory should contain the PyPI repository in a pypi subdirectory.
+
+    The function works by adding a line to the ~/.config/pip.conf file that sets the index-url to the PyPI repository 
+    located in the ods_dir. If this line already exists in the pip.conf file, it is not added again. If the line is
+    commented out, it is uncommented.
+
+    The function does not return any value. It modifies the pip.conf file in place.
+    """
+
     pypi_path = os.path.join("file:///", ods_dir.lstrip("/"), "pypi") #lstrip needed because "If any component is an absolute path, all previous path components will be discarded"
     pip_config_line = f"#Added by offlinedatasci\n[global]\nindex-url = {pypi_path}\n"
     pip_config_folder_path = Path(os.path.join(os.path.expanduser("~"), ".config", "pip"))
@@ -103,10 +141,18 @@ def activate_pypi(ods_dir):
                 output.write(pip_config_line)
     
 def deactivate():
+    """Stop using the local CRAN and PyPI mirrors
+    
+    Removes any lines added by offlinedatasci to ~/.Rprofile and ~/.config/pip/pip.conf
+    """
     deactivate_cran()
     deactivate_pypi()
 
 def deactivate_cran():
+    """Stop using the local CRAN mirror
+
+    Removes any lines added by offlinedatasci to ~/.Rprofile 
+    """
     rprofile_path = os.path.join(os.path.expanduser("~"), ".Rprofile")
     with open(rprofile_path) as input:
         rprofile_list = list(input)
@@ -118,6 +164,10 @@ def deactivate_cran():
                 output.write(line)
 
 def deactivate_pypi():
+    """Stop using the local PyPI mirror
+
+    Removes any lines added by offlinedatasci to ~/.config/pip/pip.conf 
+    """
     pip_config_folder_path = Path(os.path.join(os.path.expanduser("~"), ".config", "pip"))
     pip_config_path = Path(pip_config_folder_path, "pip.conf")
     with open(pip_config_path) as input:
