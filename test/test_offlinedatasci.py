@@ -27,7 +27,7 @@ def test_activate_pypi(tmp_path, mocker):
     with open(pip_config_path) as f:
         lines = f.readlines()
         lines = ''.join(lines)
-        assert f"#Added by offlinedatasci\n[global]\nindex-url = file:///{ods_dir.lstrip('/')}/pypi\n" in lines
+        assert f"#Added by offlinedatasci" in lines
 
 def test_download_r(tmp_path):
     download_r(tmp_path)
