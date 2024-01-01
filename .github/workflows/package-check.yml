@@ -30,7 +30,7 @@ jobs:
           pip --version
           pip install --prefer-binary lxml
       - name: Install testing dependencies
-        run: pip install pytest
+        run: pip install pytest pytest-mock
       - name: Test package installation
         run: pip install .
       - name: Package tests
